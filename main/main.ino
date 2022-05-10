@@ -1,9 +1,11 @@
+#include <HTTPClient.h>
 #include <WiFi.h>
 
 const int PIN = 39;// Analog pin
 int checkpoint;
-const char* ssid = "secret";
-const char* password = "secret";
+const char* ssid = "rpi4-ubuntu";
+const char* password = "12345678";
+String server = "http://10.42.0.1:80/";
 
 void setup() {
   // initialize serial communication at 115200 bits per second:
@@ -15,14 +17,15 @@ void setup() {
 }
 
 void loop(){
-  int raw = ADC0_promedio(20);
-  float distance = 289401 * pow(raw, -1.16);
-  Serial.println(distance);
+  int raw = ADC0_promedio(50);
+  float distance = 28940.1 * pow(raw, -1.16);
+  Serial.println(distance*10);
 
-  if(abs(checkpoint - raw) > 200){
-    Serial.print("SHOT! ->");
-    Serial.println(distance);
-    delay(1000);
+  if(distance < 25){
+    //Serial.print("SHOT! ->");
+    detection(distance*10);
+    Serial.println(distance*10);
+    //delay(1000);
   }else{
     checkpoint = raw;  
   }
@@ -44,7 +47,27 @@ void initWiFi() {
   Serial.print("Connecting to WiFi ..");
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
-    delay(1000);
+    delay(10000);
   }
   Serial.println(WiFi.localIP());
+}
+
+void detection(float distance){
+  if(WiFi.status() == WL_CONNECTED){
+      HTTPClient http;
+      WiFiClient client;
+      http.begin(client, server);
+      http.addHeader("Content-Type","application/json");
+      String string_distance = "";
+      string_distance.concat(distance);
+      String httpRequestData = "{\"distance\":\"" + string_distance + "\"}";           
+      int httpResponseCode = http.POST(httpRequestData);
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+      http.end();
+      delay(1000);
+    }
+    else {
+      Serial.println("WiFi Disconnected");
+    }
 }
