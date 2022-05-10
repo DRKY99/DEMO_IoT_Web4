@@ -40,10 +40,10 @@ class Server(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
         body = json.loads(post_data.decode('utf-8'))
-        distance = body["distance"]
+        distance = float(body["distance"])
         print(distance, initial_distance)
         distance = distance + initial_distance
-        print(distance)
+        # print(type(distance), type(initial_distance))
         cursor.execute(
             f"INSERT INTO record values(NULL,\'{value}\',\'{distance}\',DATETIME())")
         conn.commit()
